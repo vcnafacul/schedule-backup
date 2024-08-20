@@ -8,8 +8,21 @@ jobs:
   daily-task:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-
-      - name: Run a script
-        run: echo "Hello, this is your daily task!"
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Dump the PostgreSQL database
+        env:
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          pg_dump -h ${{ secrets.POSTGRES_HOST }} \
+                  -U ${{ secrets.POSTGRES_USER }} \
+                  -d ${{ secrets.POSTGRES_DB }} \
+                  -F c \
+                  -b \
+                  -v \
+                  -f db_backup.dump
+      - name: Upload dump to GitHub Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: db_backup
+          path: db_backup.dump
