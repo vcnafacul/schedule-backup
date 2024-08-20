@@ -2,7 +2,7 @@ name: Daily Workflow
 
 on:
   schedule:
-    - cron: '* */5 * * *'
+    - cron: "*/5 * * * *"
 
 jobs:
   daily-task:
@@ -30,3 +30,12 @@ jobs:
         with:
           name: db_backup
           path: db_backup.dump
+      - name: Install AWS CLI
+        run: sudo apt-get install -y awscli
+      - name: Configure AWS CLI
+        run: aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }} && aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} && aws configure set region ${{ secrets.AWS_REGION }}
+      - name: Upload dump to S3
+        run: aws s3 cp db_backup.dump s3://${{ secrets.S3_BUCKET }}/db_backup.dump --storage-class GLACIER_IR
+      - name: Verify the dump
+        run: aws s3 ls s3://${{ secrets.S3_BUCKET }}/db_backup.dump
+        
